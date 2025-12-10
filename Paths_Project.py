@@ -19,7 +19,6 @@ BASE_DIR = Path(__file__).resolve().parent
 # Es mantenen per compatibilitat, tot i que app_data ja no s'usa com a carpeta local
 APP_DATA_DIR = BASE_DIR / "app_data"   # ja no contindrà els parquets al núvol
 PAGES_DIR    = BASE_DIR / "pages"
-TOOLS_DIR    = BASE_DIR / "tools"
 CONFIG_DIR   = BASE_DIR / ".streamlit"
 
 
@@ -100,6 +99,7 @@ def check_app_data(strict: bool = False) -> None:
     Aquesta funció queda com a 'stub'.
     """
     print("check_app_data(): validació desactivada en mode Streamlit Cloud (fitxers remots a OneDrive).")
+
 
 
 
