@@ -52,6 +52,15 @@ UMAP_PARQUET_FILE        = APP_DATA_DIR / "df_docs_full_umap_simple.parquet"
 # ---- Altres artefactes opcionals ----
 SUMMARY_SBERT_FILE       = APP_DATA_DIR / "summary_03i_sbert_clustering.json"
 
+# ============================================================
+# 4. Helper de validació (desactivat en mode Cloud)
+# ============================================================
 
-
+def check_app_data(strict: bool = False) -> None:
+    """
+    En la versió per a Streamlit Cloud, els artefactes són remots (URLs)
+    i no comprovem la seva existència al sistema de fitxers local.
+    Aquesta funció queda com a 'stub'.
+    """
+    print("check_app_data(): validació desactivada en mode Streamlit Cloud (fitxers remots a OneDrive).")
 
