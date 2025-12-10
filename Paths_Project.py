@@ -53,40 +53,5 @@ UMAP_PARQUET_FILE        = APP_DATA_DIR / "df_docs_full_umap_simple.parquet"
 SUMMARY_SBERT_FILE       = APP_DATA_DIR / "summary_03i_sbert_clustering.json"
 
 
-# ============================================================
-# 4. Helper de validació (opcional però recomanat)
-# ============================================================
 
-def check_app_data(strict: bool = False) -> None:
-    """
-    Comprova que la carpeta app_data existeix i
-    informa dels fitxers que falten.
-
-    strict=True → llança error si falta algun fitxer
-    """
-    required_files = [
-        DOCS_ENRICHED_FILE,
-        DASHBOARD_KPIS_FILE,
-        OVERVIEW_STATS_FILE,
-        CLUSTER_YEAR_COUNTS_FILE,
-        DOC_TABLE_MINIMAL_FILE,
-        DOC_TABLE_ENRICHED_FILE,
-        NARRATIVE_FILE,
-        UMAP_PARQUET_FILE,
-        SUMMARY_SBERT_FILE,
-    ]
-
-    missing = [p.name for p in required_files if not p.exists()]
-
-    if missing:
-        msg = (
-            "⚠️  Fitxers que falten a app_data:\n"
-            + "\n".join(f" - {m}" for m in missing)
-        )
-        if strict:
-            raise FileNotFoundError(msg)
-        else:
-            print(msg)
-    else:
-        print("✅ app_data OK — tots els artefactes presents.")
 
