@@ -80,26 +80,21 @@ st.markdown(
 )
 
 
+
 # =============================================================================
 # 2. FUNCIONS DE CÀRREGA
 # =============================================================================
 
 @st.cache_data
 def load_main_df():
-    """Carrega el parquet principal amb tots els documents i metadades."""
-    if not os.path.exists(MAIN_PARQUET):
-        st.error(f"No s'ha trobat el parquet principal:\n{MAIN_PARQUET}")
+    """Carrega el parquet principal des d'una URL (OneDrive descarregable)."""
+    try:
+        return pd.read_parquet(MAIN_PARQUET, engine="pyarrow")
+    except Exception as e:
+        st.error("No s'ha pogut carregar el parquet principal des de la URL:")
+        st.error(MAIN_PARQUET)
+        st.error(str(e))
         return pd.DataFrame()
-
-    for engine in ["fastparquet", "pyarrow"]:
-        try:
-            return pd.read_parquet(MAIN_PARQUET, engine=engine)
-        except Exception:
-            pass
-
-    st.error("Error carregant el parquet principal amb qualsevol motor.")
-    return pd.DataFrame()
-
 
 # -------------------------------------------------------------------------
 # Helper recursiu per trobar silhouette al JSON
