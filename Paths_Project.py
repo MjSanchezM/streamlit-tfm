@@ -29,7 +29,8 @@ CONFIG_DIR   = BASE_DIR / ".streamlit"
 # ============================================================
 
 # ---- Corpus principal enriquit ----
-DOCS_ENRICHED_FILE = APP_DATA_DIR / "df_docs_kw_enriched_with_labels.parquet"
+DOCS_ENRICHED_FILE = "https://rovira-my.sharepoint.com/:u:/g/personal/39893407-e_epp_urv_cat/IQDEaBDKzwQfQ5eamm1cFS0eAQKLldqyL5EWnpDXJ-_E6Ss?download=1"
+
 
 # ---- KPIs / Overview ----
 DASHBOARD_KPIS_FILE      = APP_DATA_DIR / "dashboard_overview_kpis.parquet"
@@ -88,3 +89,4 @@ def check_app_data(strict: bool = False) -> None:
             print(msg)
     else:
         print("✅ app_data OK — tots els artefactes presents.")
+
