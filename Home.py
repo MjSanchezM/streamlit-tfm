@@ -16,8 +16,6 @@ from Paths_Project import (
     SUMMARY_SBERT_FILE,      # summary_03i_sbert_clustering.json
 )
 
-import sys
-# if str(TOOLS_DIR) not in sys.path: sys.path.append(str(TOOLS_DIR))
 
 # -------------------------------------------------------------------
 # Artefactes principals utilitzats a l'Overview
