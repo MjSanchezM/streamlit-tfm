@@ -1,8 +1,4 @@
-# 1_Overview.py
-# ===============================================================
-#  (versió refactoritzada, rutes relatives)
-# ===============================================================
-
+# Home.py
 import json
 import streamlit as st
 import pandas as pd
@@ -18,7 +14,6 @@ from Paths_Project import (
     CLUSTER_YEAR_COUNTS_FILE,# cluster_year_counts.parquet
     OVERVIEW_STATS_FILE,     # overview_stats.parquet
     SUMMARY_SBERT_FILE,      # summary_03i_sbert_clustering.json
-    TOOLS_DIR,               # carpeta tools/
 )
 
 import sys
