@@ -17,8 +17,7 @@ from Paths_Project import (
 )
 
 import sys
-if str(TOOLS_DIR) not in sys.path:
-    sys.path.append(str(TOOLS_DIR))
+# if str(TOOLS_DIR) not in sys.path: sys.path.append(str(TOOLS_DIR))
 
 # -------------------------------------------------------------------
 # Artefactes principals utilitzats a l'Overview
