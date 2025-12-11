@@ -128,30 +128,8 @@ def get_5th_label(label):
 
 
 # =============================================================================
-# 1. FUNCIÓ DE CÀRREGA D'ARTEFACTES
+# 1. FUNCIONS DE CÀRREGA D'ARTEFACTES
 # =============================================================================
-
-@st.cache_data
-def load_cluster_year_counts():
-    """
-    Carrega cluster_year_counts.parquet amb fastparquet,
-    seguint el mateix patró que la resta de pàgines.
-    """
-    if not os.path.exists(CLUSTER_YEAR_COUNTS_FILE):
-        st.error(f"No s'ha trobat el fitxer:\n{CLUSTER_YEAR_COUNTS_FILE}")
-        return pd.DataFrame()
-
-    try:
-        df = pd.read_parquet(CLUSTER_YEAR_COUNTS_FILE, engine="fastparquet")
-    except Exception as e:
-        st.error(
-            "Error carregant `cluster_year_counts.parquet` amb fastparquet:\n\n"
-            f"{e}"
-        )
-        return pd.DataFrame()
-
-    return df
-
 
 @st.cache_data
 def load_main_df():
@@ -196,14 +174,80 @@ def load_main_df():
     return df
 
 
-df_cyc = load_cluster_year_counts()
+@st.cache_data
+def load_cluster_year_counts_or_build():
+    """
+    1) Intenta carregar cluster_year_counts.parquet si existeix.
+    2) Si no existeix o és buit, el reconstrueix a partir del parquet principal.
+    """
+    # 1) Intentem carregar l'artefacte, si hi és
+    if os.path.exists(CLUSTER_YEAR_COUNTS_FILE):
+        for engine in ["fastparquet", "pyarrow"]:
+            try:
+                df = pd.read_parquet(CLUSTER_YEAR_COUNTS_FILE, engine=engine)
+                if not df.empty:
+                    return df
+            except Exception:
+                pass  # provarem a reconstruir-lo
+
+    # 2) Reconstruïm a partir del parquet principal
+    df_main_local = load_main_df()
+    if df_main_local.empty:
+        return pd.DataFrame()
+
+    df = df_main_local.copy()
+
+    # Any numèric
+    df["year"] = pd.to_numeric(df["year"], errors="coerce")
+    df = df[df["year"].notna()]
+    df["year"] = df["year"].astype(int)
+
+    # Ens assegurem que Dept_main existeix
+    if "Dept_main" not in df.columns:
+        if "Dept_list" in df.columns:
+            def get_main(lst):
+                if isinstance(lst, list) and len(lst) > 0:
+                    return lst[0]
+                return None
+            df["Dept_main"] = df["Dept_list"].apply(get_main)
+        elif "Dept_normalized" in df.columns:
+            df["Dept_main"] = df["Dept_normalized"]
+        else:
+            df["Dept_main"] = pd.NA
+
+    # Triem columna de clúster (si hi és)
+    cluster_col = None
+    for cand in ["cluster_hdbscan", "cluster_label", "cluster"]:
+        if cand in df.columns:
+            cluster_col = cand
+            break
+
+    # Definim columnes de grup
+    group_cols = ["year"]
+    if "Dept_main" in df.columns:
+        group_cols.append("Dept_main")
+    if cluster_col is not None:
+        group_cols.append(cluster_col)
+
+    df_cyc = (
+        df[group_cols]
+        .groupby(group_cols)
+        .size()
+        .reset_index(name="n_docs")
+    )
+
+    return df_cyc
+
+
+# Carreguem parquet principal i artefacte (o reconstruït)
 df_main = load_main_df()
+df_cyc = load_cluster_year_counts_or_build()
 
 if df_cyc.empty:
     st.title("Evolució institucional de la producció científica")
     st.warning(
-        "No s'han pogut carregar dades des de `cluster_year_counts.parquet`.\n"
-        "Revisa la generació al notebook 06_Visualització."
+        "No s'han pogut obtenir dades per a l'evolució institucional.\n"
+        "Ni `cluster_year_counts.parquet` ni el parquet principal han permès construir la taula."
     )
     st.stop()
 
