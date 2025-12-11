@@ -508,7 +508,7 @@ else:
         zerolinecolor=COLOR_NEUTRAL_3,
     )
 
-    st.plotly_chart(fig_global, use_container_width=True)
+    st.plotly_chart(fig_global, width="stretch")
 
 st.markdown("---")
 
@@ -563,7 +563,7 @@ if dept_col is not None:
             font=dict(color="#000078"),
             legend_title_text="Departament",
         )
-        st.plotly_chart(fig_dept, use_container_width=True)
+        st.plotly_chart(fig_dept, width="stretch")
 
 # CAS B: cluster_year_counts NO porta departament → fem servir el parquet principal
 else:
@@ -624,7 +624,7 @@ else:
                 font=dict(color="#000078"),
                 legend_title_text="Departament",
             )
-            st.plotly_chart(fig_dept, use_container_width=True)
+            st.plotly_chart(fig_dept, width="stretch")
 
 st.markdown("---")
 
@@ -746,7 +746,7 @@ else:
         st.markdown("**Taula resum de clústers per patró temporal**")
         st.dataframe(
             df_patterns_display.sort_values("Documents totals", ascending=False),
-            use_container_width=True,
+            width="stretch",
         )
 
 st.markdown("---")
