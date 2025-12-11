@@ -418,7 +418,7 @@ if df_treemap_src["cluster_label_auto"].nunique() > 1:
     )
 
 
-    st.plotly_chart(fig_treemap, use_container_width=True)
+    st.plotly_chart(fig_treemap, width="stretch")
 
 else:
     st.info("No hi ha prou diversitat de clústers per generar el Treemap.")
@@ -539,7 +539,7 @@ if not df_year.empty:
             ),
         )
 
-        st.plotly_chart(fig_year, use_container_width=True)
+        st.plotly_chart(fig_year, width="stretch")
     else:
         st.info("No hi ha dades dins del període 2011–2025 per mostrar la producció anual.")
 else:
