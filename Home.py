@@ -9,12 +9,13 @@ import os
 # 0. IMPORT DE RUTES DEL PROJECTE (TOTS ELS FITXERS → app_data)
 # -------------------------------------------------------------------
 from Paths_Project import (
-    DOCS_ENRICHED_FILE,      # df_docs_kw_enriched_with_labels.parquet
-    DASHBOARD_KPIS_FILE,     # dashboard_overview_kpis.parquet
-    CLUSTER_YEAR_COUNTS_FILE,# cluster_year_counts.parquet
-    OVERVIEW_STATS_FILE,     # overview_stats.parquet
-    SUMMARY_SBERT_FILE,      # summary_03i_sbert_clustering.json
+    DOCS_ENRICHED_FILE,        # df_docs_kw_enriched_with_labels.parquet
+    DASHBOARD_KPIS_FILE,       # dashboard_overview_kpis.parquet
+    CLUSTER_YEAR_COUNTS_FILE,  # cluster_year_counts.parquet
+    OVERVIEW_STATS_FILE,       # overview_stats.parquet
+    SUMMARY_03I_FILE,          # summary_03i_sbert_clustering.json
 )
+
 
 
 # -------------------------------------------------------------------
@@ -24,7 +25,7 @@ MAIN_PARQUET          = DOCS_ENRICHED_FILE
 DASHBOARD_KPIS_PATH   = DASHBOARD_KPIS_FILE
 CLUSTER_YEAR_COUNTS_PATH = CLUSTER_YEAR_COUNTS_FILE
 OVERVIEW_STATS_PATH   = OVERVIEW_STATS_FILE
-SUMMARY_JSON_PATH     = SUMMARY_SBERT_FILE
+SUMMARY_JSON_PATH     = SUMMARY_03I_FILE
 
 
 # -------------------------------------------------------------------
