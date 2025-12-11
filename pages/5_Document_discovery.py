@@ -594,7 +594,7 @@ if "cluster_label_best" in df_filt.columns:
             font=dict(color="#000078"),
             yaxis=dict(autorange="reversed"),
         )
-        st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_bar, width="stretch")
 
         # Text resum sota el gràfic
         total_docs_in_chart = int(top_clusters["n_docs"].sum())
@@ -703,3 +703,4 @@ st.download_button(
 )
 
 st.markdown("---")
+
