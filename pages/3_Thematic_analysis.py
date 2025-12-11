@@ -435,7 +435,7 @@ else:
         margin=dict(l=0, r=10, t=30, b=0),
         **PLOTLY_CORPORATE_THEME["layout"],
     )
-    st.plotly_chart(fig_kw, use_container_width=True)
+    st.plotly_chart(fig_kw, width="stretch")
 
 st.markdown("---")
 
@@ -508,7 +508,7 @@ with col_g1:
         **PLOTLY_CORPORATE_THEME["layout"],
     )
 
-    st.plotly_chart(fig_dept, use_container_width=True)
+    st.plotly_chart(fig_dept, width="stretch")
 
 # 7.2 Evolució temporal
 with col_g2:
@@ -541,7 +541,7 @@ with col_g2:
             ),
             **PLOTLY_CORPORATE_THEME["layout"],
         )
-        st.plotly_chart(fig_year, use_container_width=True)
+        st.plotly_chart(fig_year, width="stretch")
 
 st.markdown("---")
 
@@ -639,4 +639,5 @@ else:
     )
 
 st.markdown("---")
+
 
