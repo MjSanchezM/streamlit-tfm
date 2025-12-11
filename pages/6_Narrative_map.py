@@ -479,7 +479,7 @@ else:
         visible=False,
     )
 
-    st.plotly_chart(fig_umap, use_container_width=True)
+    st.plotly_chart(fig_umap, width="stretch")
 
 st.markdown("---")
 
@@ -513,7 +513,7 @@ cluster_summary = cluster_summary.rename(
     }
 )
 
-st.dataframe(cluster_summary, use_container_width=True)
+st.dataframe(cluster_summary, width="stretch")
 
 st.markdown(
     """
