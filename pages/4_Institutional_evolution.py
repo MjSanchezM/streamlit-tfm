@@ -22,7 +22,7 @@ st.set_page_config(
 # =============================================================================
 from Paths_Project import (
     DOCS_ENRICHED_FILE,      # df_docs_kw_enriched_with_labels.parquet (app_data)
-    CLUSTER_YEAR_COUNTS_FILE,  # cluster_year_counts.parquet (app_data)
+    CLUSTER_YEAR_FILE,  # cluster_year_counts.parquet (app_data)
     TOOLS_DIR,               # VisualAnalytics / tools
 )
 
