@@ -16,8 +16,6 @@ from Paths_Project import (
     SUMMARY_03I_FILE,          # summary_03i_sbert_clustering.json
 )
 
-
-
 # -------------------------------------------------------------------
 # Artefactes principals utilitzats a l'Overview
 # -------------------------------------------------------------------
