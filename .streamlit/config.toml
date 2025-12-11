@@ -1,0 +1,24 @@
+[theme]
+base = "light"
+
+# Colors corporatius generals
+primaryColor = "#73EDFF"              # fons dels tags seleccionats, hover, focus, etc.
+backgroundColor = "white"
+secondaryBackgroundColor = "#f0f4ff"
+textColor = "#000078"
+linkColor = "#000078"
+
+# Racons una mica arrodonits
+baseRadius = "0.5rem"
+buttonRadius = "0.5rem"
+
+# Paleta "vermella" (perquè no surti el vermell Streamlit per enlloc)
+redColor = "#73EDFF"
+redBackgroundColor = "#73EDFF"
+redTextColor = "white"
+
+[theme.sidebar]
+backgroundColor = "#f0f4ff"
+secondaryBackgroundColor = "white"
+textColor = "#000078"
+primaryColor = "#73EDFF"
