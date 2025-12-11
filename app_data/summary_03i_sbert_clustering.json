@@ -1,0 +1,17 @@
+{
+  "representation": "sbert_umap_corpus_net",
+  "n_docs": 8619,
+  "dim_latent_embeddings": 20,
+  "hdbscan": {
+    "n_clusters": 58,
+    "noise_pct": 40.3759136790811,
+    "silhouette": 0.6110755801200867,
+    "labels_file": "hdbscan_labels_sbert_net.csv"
+  },
+  "kmeans": {
+    "n_clusters": 58,
+    "noise_pct": 0.0,
+    "silhouette": 0.4192452132701874,
+    "labels_file": "kmeans_k58_labels_sbert_net.csv"
+  }
+}
