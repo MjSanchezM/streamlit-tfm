@@ -86,14 +86,39 @@ st.markdown(
 
 @st.cache_data
 def load_main_df():
-    """Carrega el parquet principal des d'una URL (OneDrive descarregable)."""
-    try:
-        return pd.read_parquet(MAIN_PARQUET, engine="pyarrow")
-    except Exception as e:
-        st.error("No s'ha pogut carregar el parquet principal des de la URL:")
-        st.error(MAIN_PARQUET)
-        st.error(str(e))
+    """
+    Carrega el parquet principal des de app_data/ (no des d'una URL).
+    Prova amb fastparquet primer i després amb pyarrow.
+    També comprova que el fitxer existeix i no és buit.
+    """
+    path = MAIN_PARQUET
+
+    # 1) Comprovem que el fitxer existeix
+    if not os.path.exists(path):
+        st.error("No s'ha trobat el parquet principal:")
+        st.error(path)
         return pd.DataFrame()
+
+    # 2) Comprovem que no estigui buit
+    size_bytes = os.path.getsize(path)
+    if size_bytes == 0:
+        st.error("El fitxer del corpus existeix però té mida 0 bytes.")
+        st.error("Revisa que s'hagi pujat correctament a la carpeta `app_data/` del repositori.")
+        st.error(str(path))
+        return pd.DataFrame()
+
+    # 3) Intentem carregar-lo amb diferents engines
+    last_err = None
+    for engine in ["fastparquet", "pyarrow"]:
+        try:
+            return pd.read_parquet(path, engine=engine)
+        except Exception as e:
+            last_err = e
+
+    st.error("No s'ha pogut carregar el parquet principal.")
+    st.error(str(last_err))
+    return pd.DataFrame()
+
 
 # -------------------------------------------------------------------------
 # Helper recursiu per trobar silhouette al JSON
