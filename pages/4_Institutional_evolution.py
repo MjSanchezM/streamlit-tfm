@@ -1,4 +1,4 @@
-# VisualAnalytics/pages/4_Institutional_evolution.py
+# pages/4_Institutional_evolution.py
 # Anàlisi de l'evolució institucional en el temps
 
 import os
@@ -35,8 +35,6 @@ MAIN_PARQUET = DOCS_ENRICHED_FILE
 # tools/ (plot_style.py, etc.)
 if str(TOOLS_DIR) not in sys.path:
     sys.path.append(str(TOOLS_DIR))
-
-
 
 # Branding corporatiu
 try:
@@ -132,33 +130,34 @@ def get_5th_label(label):
 # =============================================================================
 
 @st.cache_data
-def load_main_df():
+def load_cluster_year_counts_or_build():
     """
-    Carrega el parquet principal amb tots els documents i metadades,
-    a l'estil de la resta de pàgines.
+    1) Intenta carregar cluster_year_counts.parquet si existeix.
+    2) Si no existeix o és buit, el reconstrueix a partir del parquet principal.
     """
-    if not os.path.exists(MAIN_PARQUET):
+    # 1) Intentem carregar l'artefacte, si hi és
+    if os.path.exists(CLUSTER_YEAR_FILE):
+        for engine in ["fastparquet", "pyarrow"]:
+            try:
+                df = pd.read_parquet(CLUSTER_YEAR_FILE, engine=engine)
+                if not df.empty:
+                    return df
+            except Exception:
+                pass  # provarem a reconstruir-lo
+
+    # 2) Reconstruïm a partir del parquet principal
+    df_main_local = load_main_df()
+    if df_main_local.empty:
         return pd.DataFrame()
 
-    df = pd.DataFrame()
-    for engine in ["fastparquet", "pyarrow"]:
-        try:
-            df = pd.read_parquet(MAIN_PARQUET, engine=engine)
-            break
-        except Exception:
-            df = pd.DataFrame()
+    df = df_main_local.copy()
 
-    if df.empty:
-        return df
+    # Any numèric
+    df["year"] = pd.to_numeric(df["year"], errors="coerce")
+    df = df[df["year"].notna()]
+    df["year"] = df["year"].astype(int)
 
-    # Any normalitzat
-    if "year" not in df.columns:
-        if "AnyPubARPC" in df.columns:
-            df["year"] = pd.to_numeric(df["AnyPubARPC"], errors="coerce").astype("Int64")
-        else:
-            df["year"] = pd.NA
-
-    # Dept_main (igual que a les altres pàgines)
+    # Ens assegurem que Dept_main existeix
     if "Dept_main" not in df.columns:
         if "Dept_list" in df.columns:
             def get_main(lst):
@@ -171,7 +170,29 @@ def load_main_df():
         else:
             df["Dept_main"] = pd.NA
 
-    return df
+    # Triem columna de clúster (si hi és)
+    cluster_col = None
+    for cand in ["cluster_hdbscan", "cluster_label", "cluster"]:
+        if cand in df.columns:
+            cluster_col = cand
+            break
+
+    # Definim columnes de grup
+    group_cols = ["year"]
+    if "Dept_main" in df.columns:
+        group_cols.append("Dept_main")
+    if cluster_col is not None:
+        group_cols.append(cluster_col)
+
+    df_cyc = (
+        df[group_cols]
+        .groupby(group_cols)
+        .size()
+        .reset_index(name="n_docs")
+    )
+
+    return df_cyc
+
 
 
 @st.cache_data
