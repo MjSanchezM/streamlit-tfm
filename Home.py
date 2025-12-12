@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
-from header_tfm import header_tfm
+
 
 # -------------------------------------------------------------------
 # 0. IMPORT DE RUTES DEL PROJECTE (TOTS ELS FITXERS → app_data)
@@ -61,7 +61,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-header_tfm()
+
 st.markdown(
     """
     <style>
