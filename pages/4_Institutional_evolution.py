@@ -21,16 +21,13 @@ st.set_page_config(
 # 0. RUTES BASE I BRANDING (VERSIÓ RELATIVA VIA Paths_Project)
 # =============================================================================
 from Paths_Project import (
-    DOCS_ENRICHED_FILE,      # df_docs_kw_enriched_with_labels.parquet (app_data)
-    CLUSTER_YEAR_FILE,  # cluster_year_counts.parquet (app_data)
-    TOOLS_DIR,               # VisualAnalytics / tools
+    DOCS_ENRICHED_FILE,   # df_docs_kw_enriched_with_labels.parquet (app_data)
+    CLUSTER_YEAR_FILE,    # cluster_year_counts.parquet (app_data)
+    TOOLS_DIR,            # repo / tools (si existeix)
 )
 
 # Fitxer principal de documents
 MAIN_PARQUET = DOCS_ENRICHED_FILE
-
-# Fitxer principal per a aquesta pàgina (ja ve directament de app_data)
-# (ja importat com CLUSTER_YEAR_COUNTS_FILE)
 
 # tools/ (plot_style.py, etc.)
 if str(TOOLS_DIR) not in sys.path:
@@ -108,7 +105,7 @@ DEPT_COLOR_MAP = {
     "Altres organs de gestió": "#8B1C40",
 }
 
-# Paleta contínua institucional en grisos per al heatmap
+# Paleta contínua institucional en grisos per a intensitat de clúster
 CLUSTER_TIME_SCALE = ["#F0F0F0", "#878787"]
 
 # =============================================================================
@@ -128,6 +125,49 @@ def get_5th_label(label):
 # =============================================================================
 # 1. FUNCIONS DE CÀRREGA D'ARTEFACTES
 # =============================================================================
+
+@st.cache_data
+def load_main_df():
+    """
+    Carrega el parquet principal amb tots els documents i metadades,
+    igual que a la resta de pàgines.
+    """
+    if not os.path.exists(MAIN_PARQUET):
+        return pd.DataFrame()
+
+    df = pd.DataFrame()
+    for engine in ["fastparquet", "pyarrow"]:
+        try:
+            df = pd.read_parquet(MAIN_PARQUET, engine=engine)
+            break
+        except Exception:
+            df = pd.DataFrame()
+
+    if df.empty:
+        return df
+
+    # Any normalitzat
+    if "year" not in df.columns:
+        if "AnyPubARPC" in df.columns:
+            df["year"] = pd.to_numeric(df["AnyPubARPC"], errors="coerce").astype("Int64")
+        else:
+            df["year"] = pd.NA
+
+    # Dept_main (igual que a les altres pàgines)
+    if "Dept_main" not in df.columns:
+        if "Dept_list" in df.columns:
+            def get_main(lst):
+                if isinstance(lst, list) and len(lst) > 0:
+                    return lst[0]
+                return None
+            df["Dept_main"] = df["Dept_list"].apply(get_main)
+        elif "Dept_normalized" in df.columns:
+            df["Dept_main"] = df["Dept_normalized"]
+        else:
+            df["Dept_main"] = pd.NA
+
+    return df
+
 
 @st.cache_data
 def load_cluster_year_counts_or_build():
@@ -171,84 +211,18 @@ def load_cluster_year_counts_or_build():
             df["Dept_main"] = pd.NA
 
     # Triem columna de clúster (si hi és)
-    cluster_col = None
+    cluster_col_local = None
     for cand in ["cluster_hdbscan", "cluster_label", "cluster"]:
         if cand in df.columns:
-            cluster_col = cand
+            cluster_col_local = cand
             break
 
     # Definim columnes de grup
     group_cols = ["year"]
     if "Dept_main" in df.columns:
         group_cols.append("Dept_main")
-    if cluster_col is not None:
-        group_cols.append(cluster_col)
-
-    df_cyc = (
-        df[group_cols]
-        .groupby(group_cols)
-        .size()
-        .reset_index(name="n_docs")
-    )
-
-    return df_cyc
-
-
-
-@st.cache_data
-def load_cluster_year_counts_or_build():
-    """
-    1) Intenta carregar cluster_year_counts.parquet si existeix.
-    2) Si no existeix o és buit, el reconstrueix a partir del parquet principal.
-    """
-    # 1) Intentem carregar l'artefacte, si hi és
-    if os.path.exists(CLUSTER_YEAR_COUNTS_FILE):
-        for engine in ["fastparquet", "pyarrow"]:
-            try:
-                df = pd.read_parquet(CLUSTER_YEAR_COUNTS_FILE, engine=engine)
-                if not df.empty:
-                    return df
-            except Exception:
-                pass  # provarem a reconstruir-lo
-
-    # 2) Reconstruïm a partir del parquet principal
-    df_main_local = load_main_df()
-    if df_main_local.empty:
-        return pd.DataFrame()
-
-    df = df_main_local.copy()
-
-    # Any numèric
-    df["year"] = pd.to_numeric(df["year"], errors="coerce")
-    df = df[df["year"].notna()]
-    df["year"] = df["year"].astype(int)
-
-    # Ens assegurem que Dept_main existeix
-    if "Dept_main" not in df.columns:
-        if "Dept_list" in df.columns:
-            def get_main(lst):
-                if isinstance(lst, list) and len(lst) > 0:
-                    return lst[0]
-                return None
-            df["Dept_main"] = df["Dept_list"].apply(get_main)
-        elif "Dept_normalized" in df.columns:
-            df["Dept_main"] = df["Dept_normalized"]
-        else:
-            df["Dept_main"] = pd.NA
-
-    # Triem columna de clúster (si hi és)
-    cluster_col = None
-    for cand in ["cluster_hdbscan", "cluster_label", "cluster"]:
-        if cand in df.columns:
-            cluster_col = cand
-            break
-
-    # Definim columnes de grup
-    group_cols = ["year"]
-    if "Dept_main" in df.columns:
-        group_cols.append("Dept_main")
-    if cluster_col is not None:
-        group_cols.append(cluster_col)
+    if cluster_col_local is not None:
+        group_cols.append(cluster_col_local)
 
     df_cyc = (
         df[group_cols]
@@ -280,7 +254,7 @@ if df_cyc.empty:
 if "year" in df_cyc.columns:
     year_col = "year"
 else:
-    st.error("No s'ha trobat cap columna 'year' a cluster_year_counts.parquet.")
+    st.error("No s'ha trobat cap columna 'year' a la taula agregada.")
     st.stop()
 
 # Nombre de documents
@@ -295,7 +269,7 @@ else:
     else:
         st.error(
             "No s'ha trobat cap columna de recompte (`n_docs` o `count`) "
-            "a cluster_year_counts.parquet."
+            "a la taula agregada."
         )
         st.stop()
 
@@ -316,7 +290,6 @@ for cand in ["dept_norm", "Dept_normalized", "Dept_main", "department", "dept"]:
 # Normalitzem la columna d'any a numèrica (per si ve com a string)
 df_cyc[year_col] = pd.to_numeric(df_cyc[year_col], errors="coerce")
 
-# Anys vàlids (> 0)
 years_all = (
     df_cyc[year_col]
     .dropna()
@@ -329,7 +302,7 @@ years_all = sorted(years_all.tolist())
 
 if not years_all:
     st.error(
-        "No s'han trobat anys vàlids (> 0) a cluster_year_counts.parquet "
+        "No s'han trobat anys vàlids (> 0) a la taula agregada "
         "(després de convertir la columna a numèrica)."
     )
     st.stop()
@@ -338,7 +311,6 @@ if not years_all:
 MIN_YEAR_DASHBOARD = 2011
 MAX_YEAR_DASHBOARD = 2025
 
-# Intersecció entre el que hi ha a les dades i el rang oficial del dashboard
 years_in_range = [y for y in years_all if MIN_YEAR_DASHBOARD <= y <= MAX_YEAR_DASHBOARD]
 
 if years_in_range:
@@ -349,9 +321,6 @@ else:
     max_year_global = MAX_YEAR_DASHBOARD
 
 # -------------------------------------------------------------------
-# Llista de clústers i etiquetes "id · 5è terme"
-# -------------------------------------------------------------------
-# -------------------------------------------------------------------
 # Llista de clústers i etiquetes "Cxxx — 5è terme"
 # -------------------------------------------------------------------
 cluster_ids_for_ui = []
@@ -360,10 +329,8 @@ label_to_id = {}
 mapping_5th = {}
 
 if cluster_col is not None:
-    # Tots els clústers presents a l'artefacte agregat
     cluster_ids_for_ui = sorted(df_cyc[cluster_col].dropna().unique().tolist())
 
-    # Construïm etiquetes a partir de df_main.cluster_label_auto si es pot
     if (
         not df_main.empty
         and "cluster_label_auto" in df_main.columns
@@ -378,13 +345,11 @@ if cluster_col is not None:
         mapping_5th = dict(zip(tmp[cluster_col], tmp["fifth"]))
 
     for cid in cluster_ids_for_ui:
-        # intentem tenir un enter
         try:
             cid_int = int(cid)
         except (TypeError, ValueError):
             cid_int = None
 
-        # 5a paraula clau (o etiqueta sencera si n'hi ha menys)
         base = mapping_5th.get(cid, "")
         short = base if base else str(cid)
 
@@ -395,8 +360,6 @@ if cluster_col is not None:
 
         cluster_labels_for_ui.append(label_ui)
         label_to_id[label_ui] = cid
-
-
 
 # =============================================================================
 # 3. LAYOUT I FILTRES
@@ -426,8 +389,7 @@ st.markdown(
         <li><strong>Evolució anual global</strong> del nombre de documents analitzats.</li>
         <li><strong>Evolució per departament</strong>, per identificar quines unitats 
             generen més producció en cada moment.</li>
-        <li><strong>Evolució per clúster temàtic</strong>, amb un mapa de calor i
-            una classificació dels clústers segons la seva 
+        <li><strong>Evolució per clúster temàtic</strong>, amb una classificació dels clústers segons la seva 
             <strong>tendència temporal</strong> (emergent, estable o decreixent).</li>
       </ul>
       Els filtres d'any, departament i clúster permeten explorar <strong>patrons institucionals</strong> 
@@ -436,8 +398,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-
 
 # Selector de clústers al cos principal
 cluster_filter = None
@@ -448,14 +408,12 @@ if cluster_col is not None and cluster_ids_for_ui:
     selected_labels = st.multiselect(
         "Clústers temàtics",
         options=cluster_labels_for_ui,
-        default=[],  # cap clúster seleccionat per defecte
+        default=[],
         help="Selecciona un o més clústers temàtics per filtrar l'evolució.",
     )
 
-    # Mapegem de l'etiqueta visible al seu id real
     selected_ids = [label_to_id[lbl] for lbl in selected_labels]
     cluster_filter = selected_ids
-
 
 # Filtres a la sidebar
 st.sidebar.header("Filtres de l'evolució temporal")
@@ -494,8 +452,6 @@ if dept_col is not None and dept_filter:
 # 4. EVOLUCIÓ GLOBAL ANUAL
 # =============================================================================
 
-
-
 st.header("1. Evolució anual global de la producció")
 
 df_year_global = (
@@ -520,11 +476,7 @@ else:
             f"{df_year_global[count_col].mean():.1f}",
         )
 
-    # ------------------------------
-    # Gràfica global adaptativa
-    # ------------------------------
     if cluster_filter:
-        # Si hi ha clústers seleccionats → columnes
         fig_global = px.bar(
             df_year_global,
             x=year_col,
@@ -532,7 +484,6 @@ else:
             labels={year_col: "Any", count_col: "Documents"},
         )
     else:
-        # Vista global → línia
         fig_global = px.line(
             df_year_global,
             x=year_col,
@@ -542,11 +493,8 @@ else:
         )
         fig_global.update_traces(line=dict(color=COLOR_PRIMARY_DARK))
 
-    # ------------------------------
-    # Ajust dinàmic del límit Y
-    # ------------------------------
     y_max = df_year_global[count_col].max() if not df_year_global.empty else 0
-    y_upper = y_max * 1.15 if y_max > 0 else 1  # lleu marge superior
+    y_upper = y_max * 1.15 if y_max > 0 else 1
 
     fig_global.update_layout(
         margin=dict(l=40, r=20, t=100, b=40),
@@ -694,22 +642,17 @@ else:
 st.markdown("---")
 
 # =============================================================================
-# 6. EVOLUCIÓ PER CLÚSTER (HEATMAP) I PATRONS
-# =============================================================================
-
-# =============================================================================
-# 6. EVOLUCIÓ PER CLÚSTER (PATRONS TEMPORALS SENSE MAPA DE CALOR)
+# 6. EVOLUCIÓ PER CLÚSTER (PATRONS TEMPORALS)
 # =============================================================================
 
 st.header("3. Evolució per clúster i patrons temporals")
 
 if cluster_col is None:
     st.info(
-        "L'artefacte `cluster_year_counts.parquet` no conté una columna de clúster "
+        "L'artefacte agregat no conté una columna de clúster "
         "(`cluster_label`, `cluster_hdbscan` o `cluster`). No es pot fer l'anàlisi per clúster."
     )
 else:
-    # Agrupem per clúster i any amb els filtres ja aplicats a df_filt
     df_cluster = (
         df_filt.groupby([cluster_col, year_col])[count_col]
         .sum()
@@ -719,8 +662,6 @@ else:
     if df_cluster.empty:
         st.info("No hi ha dades per als clústers i anys seleccionats.")
     else:
-        # ---------- Patrons emergent / estable / decreixent ----------
-
         st.subheader("Tendència temàtica dels clústers (emergent, estable, decreixent)")
 
         patterns = []
@@ -757,7 +698,6 @@ else:
 
         df_patterns = pd.DataFrame(patterns)
 
-        # KPIs de recompte de clústers per tipus de tendència
         colP1, colP2, colP3 = st.columns(3)
         with colP1:
             st.metric(
@@ -775,26 +715,30 @@ else:
                 int((df_patterns["pattern"] == "decreixent").sum()),
             )
 
-        # ------------------------------------------------------------------
-        # Taula de resum amb etiquetes semàntiques
-        # ------------------------------------------------------------------
         df_patterns_display = df_patterns.copy()
 
-        # Substituïm el número de clúster per la 5a etiqueta semàntica
-        # Afegim número de clúster + etiqueta curta ("C006 — energy efficiency")
         def format_cluster_label(cid):
-            cid_int = int(cid)
+            try:
+                cid_int = int(cid)
+            except (TypeError, ValueError):
+                cid_int = None
+
             base_label = mapping_5th.get(cid, str(cid))
             short = base_label.strip() if base_label else str(cid)
-            return f"C{cid_int:03d} — {short}"
 
-        if "mapping_5th" in globals() and isinstance(mapping_5th, dict):
-            df_patterns_display["cluster"] = df_patterns_display["cluster"].apply(format_cluster_label)
+            if cid_int is not None:
+                return f"C{cid_int:03d} — {short}"
+            return short
+
+        if isinstance(mapping_5th, dict) and len(mapping_5th) > 0:
+            df_patterns_display["cluster"] = df_patterns_display["cluster"].apply(
+                format_cluster_label
+            )
         else:
-            # Si per algun motiu no hi ha mapping, mostrem només el número
-            df_patterns_display["cluster"] = df_patterns_display["cluster"].apply(lambda x: f"C{int(x):03d}")
+            df_patterns_display["cluster"] = df_patterns_display["cluster"].apply(
+                lambda x: f"C{int(x):03d}" if str(x).isdigit() else str(x)
+            )
 
-        # Canvi de noms de columnes
         df_patterns_display = df_patterns_display.rename(
             columns={
                 "cluster": "Clúster",
@@ -804,7 +748,6 @@ else:
             }
         )
 
-        # Ordenem columnes
         cols_order = ["Clúster", "Documents totals", "Pendent", "Tendència temàtica"]
         df_patterns_display = df_patterns_display[cols_order]
 
@@ -815,4 +758,3 @@ else:
         )
 
 st.markdown("---")
-
