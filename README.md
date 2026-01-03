@@ -72,8 +72,8 @@ Aquest repositori conté **exclusivament el codi de l’aplicació de visualitza
 
 ## 👩‍🎓 Autoria i filiació
 
-- **Autora:** María José Sánchez Martos  
-- **ORCID:** https://orcid.org/0000-0001-6419-3268  
+- **Autora:** Sánchez Martos, María José  
+- **ORCID:** 0000-0001-6419-3268  
 - **Filiació institucional:** CRAI, Universitat Rovira i Virgili  
 
 ---
